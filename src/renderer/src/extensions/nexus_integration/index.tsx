@@ -70,7 +70,6 @@ import { getGame } from "../gamemode_management/util/getGame";
 import type { IMod, IModRepoId } from "../mod_management/types/IMod";
 import { isDownloadIdValid, isIdValid } from "../mod_management/util/modUpdateState";
 import { setNewestVersion } from "./actions/persistent";
-import { addFreeUserDLItem, removeFreeUserDLItem } from "./actions/session";
 import { setAssociatedWithNXMURLs } from "./actions/settings";
 import {
   genCollectionIdAttribute,
@@ -117,8 +116,6 @@ import { fillNexusIdByMD5, guessFromFileName, queryResetSource } from "./util/gu
 import retrieveCategoryList from "./util/retrieveCategories";
 import Tracking from "./util/tracking";
 import { makeFileUID } from "./util/UIDs";
-import FreeUserDLDialog from "./views/FreeUserDLDialog";
-import GoPremiumDashlet from "./views/GoPremiumDashlet";
 import LoginDialog from "./views/LoginDialog";
 import LoginIcon from "./views/LoginIcon";
 import {} from "./views/Settings";
@@ -1266,63 +1263,8 @@ function once(api: IExtensionApi, callbacks: Array<(nexus: NexusT) => void>) {
   callbacks.forEach((cb) => cb(nexus));
 }
 
-function toolbarBanner(t: TFunction): React.FunctionComponent<any> {
-  return () => {
-    const context = React.useContext<IComponentContext>(MainContext);
-    const premiumPictogramPath = "assets/pictograms/premium-pictogram.svg";
-
-    const trackAndGoToPremium = (e) => {
-      context.api.events.emit("analytics-track-click-event", "Go Premium", "Header");
-      goBuyPremium(e);
-    };
-
-    return (
-      <div id="nexus-header-ad">
-        <button data-campaign={Content.HeaderAd} onClick={trackAndGoToPremium}>
-          <FlexLayout className="ad-flex-container" type="row">
-            <FlexLayout.Flex>
-              <FlexLayout className="text-flex-container" type="column">
-                <div className="nexus-header-ad-title">
-                  Want <span className="ad-title-highlight">more time</span> playing?
-                </div>
-
-                <div className="nexus-header-ad-body">
-                  Save time with <span className="ad-body-highlight">max download speeds</span>,{" "}
-                  <span className="ad-body-highlight">auto-install collections</span>, and{" "}
-                  <span className="ad-body-highlight">no ads</span>.
-                </div>
-              </FlexLayout>
-            </FlexLayout.Flex>
-
-            <FlexLayout.Fixed>
-              <Image className="premium-pictogram" srcs={[premiumPictogramPath]} />
-            </FlexLayout.Fixed>
-          </FlexLayout>
-
-          <FlexLayout className="custom-hover-overlay" type="row">
-            <FlexLayout.Fixed>
-              <FlexLayout className="hover-overlay-content" type="row">
-                {t("Go Premium")}
-
-                <div className="arrow-forward" />
-              </FlexLayout>
-            </FlexLayout.Fixed>
-          </FlexLayout>
-        </button>
-      </div>
-    );
-  };
-}
-
-function goBuyPremium(evt: React.MouseEvent<any>) {
-  const content = evt.currentTarget.getAttribute("data-campaign");
-  opn(
-    nexusModsURL(PREMIUM_PATH, {
-      section: Section.Users,
-      campaign: Campaign.BuyPremium,
-      content: content,
-    }),
-  ).catch((err) => undefined);
+function toolbarBanner(_t: TFunction): React.FunctionComponent<any> {
+  return () => null;
 }
 
 function idValid(
@@ -1687,42 +1629,7 @@ function makeNXMProtocol(api: IExtensionApi, onAwaitLink: AwaitLinkCB) {
       return PromiseBB.reject(new ProcessCanceled("Wrong user id"));
     }
 
-    if (
-      (!userInfo?.isPremium || process.env["FORCE_FREE_DOWNLOADS"] === "yes") &&
-      url.type === "mod" &&
-      url.gameId !== SITE_ID &&
-      url.key === undefined
-    ) {
-      const games = knownGames(state);
-      const gameId = convertNXMIdReverse(games, url.gameId);
-      const pageId = nexusGameId(gameById(state, gameId), url.gameId);
-
-      return getInfoGraphQL(nexus, pageId, url.modId, url.fileId)
-        .then(({ modInfo, fileInfo }) => {
-          if (modInfo["direct_download_enabled"]) {
-            return premiumUserDownload(input, url, true);
-          } else {
-            return freeUserDownload(input, url);
-          }
-        })
-        .catch((err) => {
-          const message = getErrorMessageOrDefault(err);
-          // Cancellation must propagate; otherwise sibling deps whose in-flight
-          // mod-info queries get aborted re-enter freeUserDownload, repopulate
-          // the queue, and the dialog re-opens behind the one the user just
-          // dismissed.
-          if (err instanceof UserCanceled || err instanceof ProcessCanceled) {
-            return PromiseBB.reject(err);
-          }
-          // If we can't query mod info, fall back to free user flow
-          log("warn", "failed to query mod info for direct download check", {
-            error: message,
-          });
-          return freeUserDownload(input, url);
-        });
-    } else {
-      return premiumUserDownload(input, url);
-    }
+    return premiumUserDownload(input, url);
   };
 
   return resolveFunc;
@@ -2067,54 +1974,6 @@ function init(context: IExtensionContext): boolean {
 
   const onRetry = (inputUrl: string) => onRetryImpl(resolveFunc, context.api, inputUrl);
 
-  context.registerDialog("free-user-download", FreeUserDLDialog, () => ({
-    t: context.api.translate,
-    nexus,
-    onUpdated,
-    onDownload,
-    onSkip: (inputUrl: string) => onSkip(context.api, inputUrl),
-    onCancel,
-    onRetry,
-    onCheckStatus,
-  }));
-
-  context.registerBanner(
-    "downloads",
-    () => {
-      const t = context.api.translate;
-      const electricBoltIconPath = "assets/icons/electric-bolt.svg";
-      const trackAndGoToPremium = (e) => {
-        context.api.events.emit("analytics-track-click-event", "Go Premium", "Downloads");
-        goBuyPremium(e);
-      };
-      return (
-        <div id="nexus-download-banner">
-          <div className="banner-text">
-            Free users are <span className="text-highlight">capped at 3MB/s</span> (1.5 MB/s with
-            AdBlock). Play your modded games{" "}
-            <span className="text-highlight">faster with premium</span>.
-          </div>
-
-          <Button
-            data-campaign={Content.DownloadsBannerAd}
-            id="get-premium-button"
-            onClick={trackAndGoToPremium}
-          >
-            <Image srcs={[electricBoltIconPath]} />
-
-            {t("Unlock max download speeds")}
-          </Button>
-        </div>
-      );
-    },
-    {
-      props: {
-        showAd: (state) => sel.shouldShowPremiumAd(state),
-      },
-      condition: (props: any): boolean => props.showAd,
-    },
-  );
-
   context.registerBanner("main-toolbar", toolbarBanner(context.api.translate), {
     props: {
       showAd: (state) => sel.shouldShowPremiumAd(state),
@@ -2165,20 +2024,6 @@ function init(context: IExtensionContext): boolean {
     closable: true,
   });
   */
-
-  context.registerDashlet(
-    "Go Premium",
-    1,
-    2,
-    200,
-    GoPremiumDashlet,
-    (state: IState) => sel.shouldShowPremiumAd(state),
-    undefined,
-    {
-      fixed: false,
-      closable: false,
-    },
-  );
 
   context.registerAttributeExtractor(50, (input: any, modPath: string) => {
     return processAttributes(context.api.store.getState(), input, modPath === undefined);

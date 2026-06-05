@@ -1,35 +1,21 @@
-import {
-  mdiAlertCircle,
-  mdiArrowLeft,
-  mdiEye,
-  mdiEyeOff,
-  mdiLightningBolt,
-  mdiThumbDown,
-  mdiThumbUp,
-} from "@mdi/js";
+import { mdiAlertCircle, mdiArrowLeft, mdiEye, mdiEyeOff, mdiThumbDown, mdiThumbUp } from "@mdi/js";
 import { unknownToError } from "@vortex/shared";
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 
 import type { IExtensionApi } from "../../../types/IExtensionContext";
 import type { IState } from "../../../types/IState";
 import { Button } from "../../../ui/components/button/Button";
-import { Icon } from "../../../ui/components/icon/Icon";
 import { Pictogram } from "../../../ui/components/pictogram/Pictogram";
 import { Typography } from "../../../ui/components/typography/Typography";
 import { TypographyLink } from "../../../ui/components/typography/TypographyLink";
-import { opn } from "../../../util/api";
 import { log } from "../../../util/log";
-import { shouldShowPremiumAd } from "../../../util/selectors";
-import { Campaign, Content, Section, nexusModsURL } from "../../../util/util";
 import MainPage from "../../../views/MainPage";
 import { HealthCheckFeedbackEvent } from "../../analytics/mixpanel/MixpanelEvents";
-import { PREMIUM_PATH } from "../../nexus_integration/constants";
 import { setRequirementHidden, setFeedbackGiven } from "../actions/persistent";
 import { FeedbackModal } from "../components/feedback_modal";
 import { ModRequirement } from "../components/mod_requirement";
-import { PremiumModal } from "../components/premium_modal";
 import { getModFiles, hiddenRequirements, feedbackGivenMap } from "../selectors";
 import type { IModRequirementExt, IModFileInfo } from "../types";
 import { getModFilesWithCache } from "../util";
@@ -44,8 +30,6 @@ interface IHealthCheckDetailPageProps {
 function HealthCheckDetailPage({ mod, api, onBack, onDownloadMod }: IHealthCheckDetailPageProps) {
   const { t } = useTranslation(["health_check", "common"]);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
-
   // Check if feedback was already given for this requirement (persisted)
   const feedbackMap = useSelector(feedbackGivenMap);
   const givenFeedBack = React.useMemo(() => {
@@ -55,8 +39,6 @@ function HealthCheckDetailPage({ mod, api, onBack, onDownloadMod }: IHealthCheck
 
   // Get mod files from Redux cache
   const modFiles = useSelector((state: IState) => getModFiles(state, mod.modId));
-
-  const showPremiumAd = useSelector(shouldShowPremiumAd);
 
   // Check if this requirement is currently hidden
   const hiddenReqsMap = useSelector(hiddenRequirements);
@@ -83,20 +65,13 @@ function HealthCheckDetailPage({ mod, api, onBack, onDownloadMod }: IHealthCheck
     opn(mod.requiredBy.modUrl).catch(() => null);
   }, [mod.requiredBy.modUrl]);
 
-  // Memoized callback for premium modal download action
+  // Memoized callback for download action
   const handleDownload = React.useCallback(
     async (file?: IModFileInfo) => {
-      setShowPremiumModal(false);
-      if (!showPremiumAd) {
-        await onDownloadMod?.(mod, file);
-        onBack();
-        // Health check list is refreshed automatically by the debounced
-        // did-install-mod / did-enable-mods triggers in api/triggers.ts
-      } else {
-        setShowPremiumModal(true);
-      }
+      await onDownloadMod?.(mod, file);
+      onBack();
     },
-    [onDownloadMod, mod, showPremiumAd, onBack],
+    [onDownloadMod, mod, onBack],
   );
 
   // Memoized callback for positive feedback (thumbs up)
@@ -143,16 +118,6 @@ function HealthCheckDetailPage({ mod, api, onBack, onDownloadMod }: IHealthCheck
     onBack();
   }, [api.store, mod.requiredBy.modId, mod.id, onBack]);
 
-  const goPremium = React.useCallback(() => {
-    opn(
-      nexusModsURL(PREMIUM_PATH, {
-        section: Section.Users,
-        campaign: Campaign.BuyPremium,
-        content: Content.HealthCheckAd,
-      }),
-    ).catch(() => undefined);
-  }, []);
-
   return (
     <MainPage id="health-check-detail-page">
       <MainPage.Body>
@@ -192,26 +157,6 @@ function HealthCheckDetailPage({ mod, api, onBack, onDownloadMod }: IHealthCheck
               </Button>
             </div>
           </div>
-
-          {showPremiumAd && (
-            <div className="mb-4 flex items-center justify-between gap-x-6 rounded-sm border border-premium-moderate/23 bg-linear-to-r from-premium-moderate/25 via-premium-moderate/10 to-premium-moderate/25 px-4 py-3 shadow-xs">
-              <div className="flex items-center gap-x-1.5">
-                <Icon className="text-netural-strong shrink-0" path={mdiLightningBolt} />
-
-                <div className="flex grow items-center gap-x-2">
-                  <Typography className="font-semibold">{t("premium::banner::title")}</Typography>
-
-                  <Typography appearance="none" className="text-premium-strong">
-                    {t("premium::banner::subtitle")}
-                  </Typography>
-                </div>
-              </div>
-
-              <Button buttonType="premium" size="sm" onClick={goPremium}>
-                {t("premium::banner::button")}
-              </Button>
-            </div>
-          )}
 
           <div className="flex items-start gap-x-3 rounded-lg border border-stroke-weak p-6">
             <Icon className="mt-0.5 shrink-0 text-info-strong" path={mdiAlertCircle} />
@@ -260,11 +205,8 @@ function HealthCheckDetailPage({ mod, api, onBack, onDownloadMod }: IHealthCheck
                 key={mod.uid || `${mod.modId}`}
                 mod={mod}
                 modFiles={modFiles}
-                showPremiumBadge={showPremiumAd}
                 onConfirmInstall={handleConfirmInstall}
-                onShowVortexModal={
-                  !showPremiumAd ? handleDownload : () => setShowPremiumModal(true)
-                }
+                onShowVortexModal={handleDownload}
               />
             </div>
           </div>
@@ -300,12 +242,6 @@ function HealthCheckDetailPage({ mod, api, onBack, onDownloadMod }: IHealthCheck
           </div>
         </div>
       </MainPage.Body>
-
-      <PremiumModal
-        isOpen={showPremiumModal}
-        onClose={() => setShowPremiumModal(false)}
-        onDownload={handleDownload}
-      />
 
       <FeedbackModal
         isOpen={showFeedbackModal}

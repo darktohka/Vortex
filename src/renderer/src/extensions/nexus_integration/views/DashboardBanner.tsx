@@ -92,12 +92,6 @@ class DashboardBanner extends ComponentEx<IProps, { requested: boolean }> {
         <div className="nexus-name">
           <div className="nexus-name-username">{userInfo.name}</div>
           <div className="nexus-name-account">
-            {userInfo.isPremium
-              ? t("Premium")
-              : userInfo.isSupporter
-                ? t("Supporter")
-                : t("Member")}
-            {" \u00B7 "}
             <a onClick={this.openProfile}>{t("See Profile")}</a>
           </div>
         </div>

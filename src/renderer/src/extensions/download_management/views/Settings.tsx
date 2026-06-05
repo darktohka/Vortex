@@ -22,7 +22,6 @@ import { ComponentEx, connect, translate } from "../../../controls/ComponentEx";
 import FlexLayout from "../../../controls/FlexLayout";
 import FormInput from "../../../controls/FormInput";
 import Icon from "../../../controls/Icon";
-import Image from "../../../controls/Image";
 import More from "../../../controls/More";
 import Spinner from "../../../controls/Spinner";
 import Toggle from "../../../controls/Toggle";
@@ -53,18 +52,7 @@ import opn from "../../../util/opn";
 import * as selectors from "../../../util/selectors";
 import { getSafe } from "../../../util/storeHelper";
 import { cleanFailedTransfer, testPathTransfer, transferPath } from "../../../util/transferPath";
-import {
-  Campaign,
-  ciEqual,
-  isChildPath,
-  isPathValid,
-  isReservedDirectory,
-  nexusModsURL,
-  Section,
-  Content,
-} from "../../../util/util";
-import getTextMod from "../../mod_management/texts";
-import { PREMIUM_PATH } from "../../nexus_integration/constants";
+import { ciEqual, isChildPath, isPathValid, isReservedDirectory } from "../../../util/util";
 import {
   setCopyOnIFF,
   setDownloadPath,
@@ -81,7 +69,6 @@ const MB = 1024 * 1024;
 
 interface IConnectedProps {
   parallelDownloads: number;
-  isPremium: boolean;
   downloadPath: string;
   modsInstallPath: string;
   downloads: { [downloadId: string]: IDownload };
@@ -143,7 +130,7 @@ class Settings extends ComponentEx<IProps, IComponentState> {
   }
 
   public render(): JSX.Element {
-    const { t, copyOnIFF, downloads, isPremium, maxBandwidth, parallelDownloads } = this.props;
+    const { t, copyOnIFF, downloads, maxBandwidth, parallelDownloads } = this.props;
     const { downloadPath, progress, progressFile } = this.state;
 
     const pathPreview = getDownloadPath(downloadPath);
@@ -230,24 +217,7 @@ class Settings extends ComponentEx<IProps, IComponentState> {
               min={1}
               max={10}
               onChange={this.onChangeParallelDownloads}
-              disabled={!isPremium}
             />
-            {!isPremium ? (
-              <BSButton id="get-premium-button" onClick={this.goBuyPremium}>
-                <Image srcs={[electricBoltIconPath]} />
-                {t("Unlock max download speeds")}
-              </BSButton>
-            ) : null}
-          </div>
-          <div>
-            {!isPremium ? (
-              <p>
-                {t(
-                  "Regular users are restricted to 1 download thread - " +
-                    "Go Premium for up to 10 download threads!",
-                )}
-              </p>
-            ) : null}
           </div>
         </FormGroup>
         <FormGroup id="download-bandwidth-limit">
@@ -397,16 +367,6 @@ class Settings extends ComponentEx<IProps, IComponentState> {
   private openUrl = (evt) => {
     const url = evt.currentTarget.getAttribute("data-url");
     opn(url).catch((err) => undefined);
-  };
-
-  private goBuyPremium = () => {
-    opn(
-      nexusModsURL(PREMIUM_PATH, {
-        section: Section.Users,
-        campaign: Campaign.BuyPremium,
-        content: Content.SettingsDownloadAd,
-      }),
-    ).catch(() => null);
   };
 
   private setDownloadPath = (newPath: string) => {
@@ -836,11 +796,8 @@ class Settings extends ComponentEx<IProps, IComponentState> {
 
 function mapStateToProps(state: IState): IConnectedProps {
   const modsInstallPath = selectors.installPath(state);
-  const isPremium = getSafe(state, ["persistent", "nexus", "userInfo", "isPremium"], false);
   return {
-    parallelDownloads: isPremium ? state.settings.downloads.maxParallelDownloads : 1,
-    // TODO: this breaks encapsulation
-    isPremium,
+    parallelDownloads: state.settings.downloads.maxParallelDownloads,
     downloadPath: state.settings.downloads.path,
     downloads: state.persistent.downloads.files,
     modsInstallPath,

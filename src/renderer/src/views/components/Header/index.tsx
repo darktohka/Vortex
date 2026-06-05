@@ -14,7 +14,6 @@ import { useSpineContext } from "../Spine/SpineContext";
 import { HelpSection } from "./HelpSection";
 import { IconButton } from "./IconButton";
 import { Notifications } from "./Notifications";
-import { PremiumIndicator } from "./PremiumIndicator";
 import { ProfileSection } from "./ProfileSection";
 import { WindowControls } from "./WindowControls";
 
@@ -75,8 +74,6 @@ export const Header: FC = () => {
       </div>
 
       <div className="flex shrink-0 items-center gap-x-4" style={{ WebkitAppRegion: "no-drag" }}>
-        <PremiumIndicator />
-
         <div className="flex gap-x-2">
           <Notifications />
 

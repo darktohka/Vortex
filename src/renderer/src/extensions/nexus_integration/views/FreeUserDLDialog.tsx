@@ -11,9 +11,8 @@ import type { IComponentContext } from "../../../types/IComponentContext";
 import type { IState } from "../../../types/IState";
 import { log } from "../../../util/log";
 import opn from "../../../util/opn";
-import { Campaign, Content, nexusModsURL, Section } from "../../../util/util";
 import { MainContext } from "../../../views/MainWindow";
-import { NEXUS_BASE_URL, PREMIUM_PATH } from "../constants";
+import { NEXUS_BASE_URL } from "../constants";
 import NXMUrl from "../NXMUrl";
 import type { IValidateKeyDataV2 } from "../types/IValidateKeyData";
 import { nexusGamesProm } from "../util";
@@ -109,7 +108,7 @@ function FreeUserDLDialog(props: IFreeUserDLDialogProps) {
   const [positionText, setPositionText] = React.useState<string>("1/1");
   const lastFetchUrl = React.useRef<string>();
 
-  const show = urls.length > 0 && !userInfo?.isPremium;
+  const show = urls.length > 0;
 
   React.useEffect(() => {
     if (!show) return;
@@ -136,11 +135,6 @@ function FreeUserDLDialog(props: IFreeUserDLDialogProps) {
       setPositionText(`${position}/${total}`);
     }
   }, [collectionInstallSession]);
-
-  React.useEffect(() => {
-    // if userInfo is updated, and isPremium is true, then retry
-    if (userInfo !== undefined) if (userInfo?.isPremium && urls.length > 0) retry();
-  }, [userInfo]);
 
   React.useEffect(() => {
     const fetchFileInfo = async () => {
@@ -206,18 +200,6 @@ function FreeUserDLDialog(props: IFreeUserDLDialogProps) {
     opn(`${NEXUS_BASE_URL}/${fileInfo.game.domainName}/users/${fileInfo.owner.memberId}`);
   }, [fileInfo]);
 
-  const goPremium = React.useCallback(() => {
-    context.api.events.emit("analytics-track-click-event", "Go Premium", "Download Mod");
-
-    opn(
-      nexusModsURL(PREMIUM_PATH, {
-        section: Section.Users,
-        campaign: Campaign.BuyPremium,
-        content: Content.DownloadModModal,
-      }),
-    ).catch(() => null);
-  }, [campaign]);
-
   return (
     <Modal id="free-user-dl-dialog" show={show} onHide={nop}>
       <Modal.Header>
@@ -227,7 +209,6 @@ function FreeUserDLDialog(props: IFreeUserDLDialogProps) {
       <Modal.Body>
         <NewFreeDownloadModal
           fileInfo={fileInfo}
-          goPremium={goPremium}
           openModPage={openModPage}
           positionText={positionText}
           t={t}

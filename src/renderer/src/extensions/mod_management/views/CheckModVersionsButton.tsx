@@ -22,7 +22,6 @@ interface IConnectedProps {
   mods: { [modId: string]: IModWithState };
   gameMode: string;
   updateRunning: boolean;
-  isPremium: boolean;
 }
 
 type IProps = IBaseProps & IConnectedProps;
@@ -65,7 +64,7 @@ class CheckVersionsButton extends ComponentEx<IProps, {}> {
       type: "success",
       message: message,
       actions:
-        this.props.isPremium && modIds.length > 0
+        modIds.length > 0
           ? [
               {
                 title: "Update All",
@@ -173,7 +172,6 @@ function mapStateToProps(state: any): IConnectedProps {
     mods: modsWithState,
     gameMode,
     updateRunning: getSafe(state, ["session", "mods", "updatingMods", gameMode], false),
-    isPremium: getSafe(state, ["persistent", "nexus", "userInfo", "isPremium"], false),
   };
 }
 

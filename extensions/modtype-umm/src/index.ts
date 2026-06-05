@@ -3,7 +3,7 @@ import * as path from "path";
 import { selectors, types, util } from "@nexusmods/vortex-api";
 
 import { addGameSupport, getSupportMap, UMM_EXE, UMM_ID } from "./common";
-import { InvalidAPICallError, NotPremiumError } from "./Errors";
+import { InvalidAPICallError } from "./Errors";
 import { IUMMGameConfig } from "./types";
 import { ensureUMM } from "./ummDownloader";
 import { isUMMExecPred, setUMMPath, toBlue } from "./util";
@@ -76,9 +76,7 @@ async function genOnGameModeActivated(api: types.IExtensionApi, gameId: string) 
   try {
     await ensureUMM(api, gameId);
   } catch (err) {
-    if (!(err instanceof NotPremiumError)) {
-      api.showErrorNotification("Failed to ensure UMM installation", err);
-    }
+    api.showErrorNotification("Failed to ensure UMM installation", err);
   }
 }
 
@@ -93,9 +91,7 @@ async function genOnCheckUpdate(
   try {
     await ensureUMM(api, gameId);
   } catch (err) {
-    if (!(err instanceof NotPremiumError)) {
-      api.showErrorNotification("Failed to ensure UMM installation", err);
-    }
+    api.showErrorNotification("Failed to ensure UMM installation", err);
   }
 }
 

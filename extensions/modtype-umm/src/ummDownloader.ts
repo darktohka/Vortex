@@ -5,7 +5,7 @@ import { actions, fs, log, selectors, types, util } from "@nexusmods/vortex-api"
 import * as winapi from "winapi-bindings";
 
 import { getDownload, getSupportMap, NEXUS, UMM_EXE } from "./common";
-import { AutoInstallDisabledError, NotPremiumError } from "./Errors";
+import { AutoInstallDisabledError } from "./Errors";
 import { INexusDownloadInfo, IUMMGameConfig } from "./types";
 import { setUMMPath } from "./util";
 
@@ -51,45 +51,6 @@ export async function ensureUMM(
     if (err instanceof AutoInstallDisabledError) {
       log("debug", "auto install is disabled", err);
       return Promise.resolve(undefined);
-    }
-    if (err instanceof NotPremiumError) {
-      const t = api.translate;
-      const replace = {
-        game: gameMode,
-        bl: "[br][/br][br][/br]",
-      };
-      api.showDialog(
-        "info",
-        "Unity Mod Manager Required",
-        {
-          bbcode: t(
-            "The {{game}} game extension requires a 3rd party mod " +
-              "patching/injection tool called Unity Mod Manager (UMM).{{bl}}" +
-              "Vortex can walk you through the download/installation process; once complete, UMM " +
-              "will be available as a tool in your dashboard." +
-              "Depending on the modding pattern of {{game}}, UMM may be a hard requirement " +
-              "for mods to function in-game, in which case you MUST have the tool installed " +
-              "and configured to inject mods into your game. (run the tool for more info)",
-            { replace },
-          ),
-        },
-        [
-          { label: "Close" },
-          {
-            label: "Download UMM",
-            action: async () => {
-              try {
-                await downloadFromGithub(api, dl);
-              } catch (err2) {
-                err["attachLogOnReport"] = true;
-                api.showErrorNotification("Failed to download UMM dependency", err2);
-              }
-            },
-            default: true,
-          },
-        ],
-      );
-      return Promise.reject(err);
     }
     log("error", "failed to download default pack", err);
     return Promise.resolve(undefined);
@@ -237,9 +198,6 @@ async function download(
 ): Promise<string> {
   const { domainId, modId, fileId, archiveName, allowAutoInstall } = downloadInfo;
   const state = api.getState();
-  if (!util.getSafe(state, ["persistent", "nexus", "userInfo", "isPremium"], false)) {
-    return Promise.reject(new NotPremiumError());
-  }
 
   const downloadId = genDownloadInfo(api, archiveName).downloadId;
   if (downloadId !== undefined) {

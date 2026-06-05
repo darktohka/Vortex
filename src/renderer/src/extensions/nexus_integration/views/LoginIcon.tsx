@@ -72,15 +72,8 @@ class LoginIcon extends ComponentEx<IProps, {}> {
     onClearUserInfo();
   };
 
-  private getMembershipText(userInfo: IValidateKeyDataV2): string {
-    if (userInfo?.isPremium === true) {
-      return "★ Premium";
-    } else if (userInfo?.isSupporter === true && userInfo?.isPremium === false) {
-      return "Supporter";
-    } else if (userInfo?.isLifetime === true) {
-      return "Premium";
-    }
-    return "Free";
+  private getMembershipText(_userInfo: IValidateKeyDataV2): string {
+    return "";
   }
 
   private renderMembershipStatus = () => {

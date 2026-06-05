@@ -364,15 +364,6 @@ function downloadFile(
 ): Bluebird<string> {
   const state: IState = api.getState();
   const gameId = game?.id ?? SITE_ID;
-  if (
-    game != null &&
-    gameId !== SITE_ID &&
-    !getSafe(state, ["persistent", "nexus", "userInfo", "isPremium"], false)
-  ) {
-    // nexusmods can't let users download files directly from client, without
-    // showing ads
-    return Bluebird.reject(new ProcessCanceled("Only available to premium users"));
-  }
   // TODO: Need some way to identify if this request is actually for a nexus mod
   const url = `nxm://${toNXMId(game, gameId)}/mods/${modId}/files/${fileId}`;
   log("debug", "downloading from generated nxm link", { url, fileName });

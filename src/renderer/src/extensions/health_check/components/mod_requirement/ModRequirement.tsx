@@ -2,8 +2,6 @@ import { mdiCheck, mdiDiamondStone, mdiDownload, mdiOpenInNew, mdiWeb } from "@m
 import React from "react";
 import { useTranslation } from "react-i18next";
 
-import { PremiumBadge } from "@/ui/components/premium_badge/PremiumBadge";
-
 import { Button } from "../../../../ui/components/button/Button";
 import { Icon } from "../../../../ui/components/icon/Icon";
 import { Typography } from "../../../../ui/components/typography/Typography";
@@ -12,13 +10,11 @@ import type { IModFileInfo, IModRequirementExt } from "../../types";
 export const ModRequirement = ({
   mod,
   modFiles,
-  showPremiumBadge = false,
   onShowVortexModal,
   onConfirmInstall,
 }: {
   mod: IModRequirementExt;
   modFiles?: IModFileInfo[];
-  showPremiumBadge?: boolean;
   onShowVortexModal?: (file?: IModFileInfo) => void;
   onConfirmInstall?: () => void;
 }) => {
@@ -84,7 +80,6 @@ export const ModRequirement = ({
                   buttonType="secondary"
                   filled="strong"
                   leftIconPath={mdiDownload}
-                  rightIcon={showPremiumBadge && <PremiumBadge />}
                   size="sm"
                   onClick={() => onShowVortexModal?.()}
                 >
