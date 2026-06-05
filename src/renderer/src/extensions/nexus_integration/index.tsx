@@ -18,7 +18,7 @@ import { DownloadIsHTML } from "@vortex/shared/errors";
 import PromiseBB from "bluebird";
 import * as fuzz from "fuzzball";
 import type { TFunction } from "i18next";
-import * as React from "react";
+import type * as React from "react";
 import { Button } from "react-bootstrap";
 import type { Action } from "redux";
 import {} from "uuid";
@@ -70,6 +70,7 @@ import { getGame } from "../gamemode_management/util/getGame";
 import type { IMod, IModRepoId } from "../mod_management/types/IMod";
 import { isDownloadIdValid, isIdValid } from "../mod_management/util/modUpdateState";
 import { setNewestVersion } from "./actions/persistent";
+import { addFreeUserDLItem, removeFreeUserDLItem } from "./actions/session";
 import { setAssociatedWithNXMURLs } from "./actions/settings";
 import {
   genCollectionIdAttribute,

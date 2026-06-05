@@ -151,7 +151,7 @@ class Settings extends ComponentEx<IProps, IComponentState> {
             <ControlLabel>
               {t("Downloads Folder")}
               <More id="more-paths" name={t("Downloads Folder")}>
-                {getTextMod("downloadspath", t)}
+                {getText("downloadspath", t)}
               </More>
             </ControlLabel>
             <FlexLayout type="row">

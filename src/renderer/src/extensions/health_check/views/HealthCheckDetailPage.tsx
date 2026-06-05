@@ -1,15 +1,17 @@
 import { mdiAlertCircle, mdiArrowLeft, mdiEye, mdiEyeOff, mdiThumbDown, mdiThumbUp } from "@mdi/js";
 import { unknownToError } from "@vortex/shared";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 
 import type { IExtensionApi } from "../../../types/IExtensionContext";
 import type { IState } from "../../../types/IState";
 import { Button } from "../../../ui/components/button/Button";
+import { Icon } from "../../../ui/components/icon/Icon";
 import { Pictogram } from "../../../ui/components/pictogram/Pictogram";
 import { Typography } from "../../../ui/components/typography/Typography";
 import { TypographyLink } from "../../../ui/components/typography/TypographyLink";
+import { opn } from "../../../util/api";
 import { log } from "../../../util/log";
 import MainPage from "../../../views/MainPage";
 import { HealthCheckFeedbackEvent } from "../../analytics/mixpanel/MixpanelEvents";
